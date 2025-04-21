@@ -1,0 +1,3 @@
+boto3
+moto
+# Add any other libraries your function or tests depend on
