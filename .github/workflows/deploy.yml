@@ -54,17 +54,16 @@ jobs:
           role-session-name: GitHubActionsBackendDeploy # Descriptive session name
           aws-region: ${{ env.AWS_REGION }}
 
-      # Deploy step no longer needs direct credentials
-      - name: Deploy with SAM/CloudFormation
-        uses: aws-actions/deploy-cloudformation@v1 # This action implicitly uses credentials set by the previous step
-        with:
-          template: template.yaml
-          stack-name: ${{ env.STACK_NAME }}
-          capabilities: CAPABILITY_IAM
-          # aws-access-key-id and aws-secret-access-key are no longer needed here
-          aws-region: ${{ env.AWS_REGION }} # Use the env var
+      # Deploy step using AWS CLI as an alternative
+      - name: Deploy with AWS CLI
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name ${{ env.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --region ${{ env.AWS_REGION }} \
+            --no-fail-on-empty-changeset # Optional: Don't fail if no changes are detected
 
       # Consider running tests earlier, perhaps after install but before packaging/deploy
       - name: Run Tests
         run: python -m unittest discover src/tests
-
