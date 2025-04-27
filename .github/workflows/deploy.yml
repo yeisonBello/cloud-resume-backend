@@ -13,7 +13,7 @@ env:
 
 # Add permissions block for OIDC token
 permissions:
-  id-token: write # Required to fetch the OIDC token
+  id-token: write # Required to fetch the OIDC token.
   contents: read # Required to checkout the code
 
 jobs:
