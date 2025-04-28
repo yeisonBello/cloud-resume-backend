@@ -8,6 +8,10 @@ Parameters:
     Description: Name of the DynamoDB table to store visitor counts
     Default: count
 
+  IAMRoleArn:
+    Type: String
+    Description: ARN of the existing IAM Role for Lambda
+
 Resources:
   VisitorCounterTable:
     Type: AWS::DynamoDB::Table
@@ -21,19 +25,14 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-Parameters:
-  IAMRoleArn:
-    Type: String
-    Description: ARN of the existing IAM Role for Lambda
-
   VisitorCounterFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: counter_function
-      CodeUri: deployment.zip   # <<< CHANGED! This points to your packaged ZIP file
+      CodeUri: deployment.zip
       Handler: lambda_function.lambda_handler
       Runtime: python3.9
-      Role: !GetAtt IAMRoleAdminlambdarole.Arn
+      Role: !Ref IAMRoleArn    # <<< FIXED! Use parameter
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
@@ -41,7 +40,7 @@ Parameters:
   VisitorCounterApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      CorsConfiguration:      # <<< FIXED! Proper CORS block
+      CorsConfiguration:
         AllowHeaders:
           - Content-Type
           - X-Amz-Date

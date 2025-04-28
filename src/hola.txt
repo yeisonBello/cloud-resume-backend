@@ -213,4 +213,91 @@ jobs:
 
       # Consider running tests earlier, perhaps after install but before packaging/deploy
       - name: Run Tests
-        run: python -m unittest discover src/tests
+        run: python -m unittest discover src/
+        
+        ==========================================
+        AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Backend infrastructure for the Cloud Resume Challenge
+
+Parameters:
+  DynamoDBTableName:
+    Type: String
+    Description: Name of the DynamoDB table to store visitor counts
+    Default: count
+
+Resources:
+  VisitorCounterTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref DynamoDBTableName
+      AttributeDefinitions:
+        - AttributeName: key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: key
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Parameters:
+  IAMRoleArn:
+    Type: String
+    Description: ARN of the existing IAM Role for Lambda
+
+  VisitorCounterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: counter_function
+      CodeUri: deployment.zip   # <<< CHANGED! This points to your packaged ZIP file
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Role: !GetAtt IAMRoleAdminlambdarole.Arn
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
+
+  VisitorCounterApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:      # <<< FIXED! Proper CORS block
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowOrigins:
+          - "*"
+      DefinitionBody:
+        openapi: "3.0.0"
+        info:
+          title: Visitor Counter API
+        paths:
+          /visit:
+            post:
+              summary: Increment visitor count
+              x-amazon-apigateway-integration:
+                payloadFormatVersion: "1.0"
+                type: AWS_PROXY
+                httpMethod: POST
+                uri:
+                  $ref: >-
+                    'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations'
+            get:
+              summary: Get visitor count
+              x-amazon-apigateway-integration:
+                payloadFormatVersion: "1.0"
+                type: AWS_PROXY
+                httpMethod: GET
+                uri:
+                  $ref: >-
+                    'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations'
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Endpoint URL"
+    Value: !Sub "https://${VisitorCounterApi}.execute-api.${AWS::Region}.amazonaws.com"
