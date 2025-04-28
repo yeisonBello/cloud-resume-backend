@@ -36,7 +36,6 @@ Resources:
   VisitorCounterApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      Name: visitor-counter-api
       CorsConfiguration:      # <<< FIXED! Proper CORS block
         AllowHeaders:
           - Content-Type
