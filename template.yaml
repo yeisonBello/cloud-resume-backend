@@ -24,23 +24,23 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
- VisitorCounterApi:
-  Type: AWS::Serverless::HttpApi
-  Properties:
-    CorsConfiguration:
-      AllowHeaders:
-        - Content-Type
-        - X-Amz-Date
-        - Authorization
-        - X-Api-Key
-        - X-Amz-Security-Token
-      AllowMethods:
-        - GET
-        - POST
-        - OPTIONS
-      AllowOrigins:
-        - "*"
-    StageName: default
+  VisitorCounterApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowOrigins:
+          - "*"
+      StageName: default
 
   VisitorCounterFunction:
     Type: AWS::Serverless::Function
