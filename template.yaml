@@ -7,10 +7,9 @@ Parameters:
     Type: String
     Description: Name of the DynamoDB table to store visitor counts
     Default: count
-
   IAMRoleArn:
     Type: String
-    Description: ARN of the existing IAM Role for Lambda
+    Description: ARN of the IAM role for Lambda function
 
 Resources:
   VisitorCounterTable:
@@ -32,7 +31,7 @@ Resources:
       CodeUri: deployment.zip
       Handler: lambda_function.lambda_handler
       Runtime: python3.9
-      Role: !Ref IAMRoleArn    # <<< FIXED! Use parameter
+      Role: !Ref IAMRoleArn     # <<< Fixed! Use passed-in role directly
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
@@ -66,8 +65,7 @@ Resources:
                 type: AWS_PROXY
                 httpMethod: POST
                 uri:
-                  $ref: >-
-                    'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations'
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations
             get:
               summary: Get visitor count
               x-amazon-apigateway-integration:
@@ -75,8 +73,7 @@ Resources:
                 type: AWS_PROXY
                 httpMethod: GET
                 uri:
-                  $ref: >-
-                    'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations'
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations
 
 Outputs:
   ApiEndpoint:
