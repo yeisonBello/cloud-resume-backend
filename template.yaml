@@ -21,6 +21,11 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
+Parameters:
+  IAMRoleArn:
+    Type: String
+    Description: ARN of the existing IAM Role for Lambda
+
   VisitorCounterFunction:
     Type: AWS::Serverless::Function
     Properties:
