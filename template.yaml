@@ -31,7 +31,7 @@ Resources:
       CodeUri: deployment.zip
       Handler: lambda_function.lambda_handler
       Runtime: python3.9
-      Role: !Ref IAMRoleArn     # <<< Fixed! Use passed-in role directly
+      Role: !Ref IAMRoleArn
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
@@ -52,28 +52,7 @@ Resources:
           - OPTIONS
         AllowOrigins:
           - "*"
-      DefinitionBody:
-        openapi: "3.0.0"
-        info:
-          title: Visitor Counter API
-        paths:
-          /visit:
-            post:
-              summary: Increment visitor count
-              x-amazon-apigateway-integration:
-                payloadFormatVersion: "1.0"
-                type: AWS_PROXY
-                httpMethod: POST
-                uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations
-            get:
-              summary: Get visitor count
-              x-amazon-apigateway-integration:
-                payloadFormatVersion: "1.0"
-                type: AWS_PROXY
-                httpMethod: GET
-                uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations
+      Target: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations
 
 Outputs:
   ApiEndpoint:
