@@ -1,18 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description:  Backend infrastructure for the Cloud Resume Challenge
+Description: Backend infrastructure for the Cloud Resume Challenge
 
 Parameters:
   DynamoDBTableName:
     Type: String
     Description: Name of the DynamoDB table to store visitor counts
-    Default: count  # Use the name from your CloudFormation template
+    Default: count
 
 Resources:
   VisitorCounterTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref DynamoDBTableName #changed to use the parameter
+      TableName: !Ref DynamoDBTableName
       AttributeDefinitions:
         - AttributeName: key
           AttributeType: S
@@ -24,19 +24,32 @@ Resources:
   VisitorCounterFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: counter_function # Use the name from your CloudFormation template
-      CodeUri: src/
+      FunctionName: counter_function
+      CodeUri: deployment.zip   # <<< CHANGED! This points to your packaged ZIP file
       Handler: lambda_function.lambda_handler
       Runtime: python3.9
-      Role: !GetAtt IAMRoleAdminlambdarole.Arn # Use the existing role
+      Role: !GetAtt IAMRoleAdminlambdarole.Arn
       Environment:
         Variables:
-          DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName # Pass the table name
+          DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
 
   VisitorCounterApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      Name: visitor-counter-api #keep name
+      Name: visitor-counter-api
+      CorsConfiguration:      # <<< FIXED! Proper CORS block
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowOrigins:
+          - "*"
       DefinitionBody:
         openapi: "3.0.0"
         info:
@@ -61,19 +74,6 @@ Resources:
                 uri:
                   $ref: >-
                     'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${VisitorCounterFunction.Arn}/invocations'
-      # CORS configuration
-      Cors:
-        AllowHeaders:
-          - Content-Type
-          - X-Amz-Date
-          - Authorization
-          - X-Api-Key
-          - X-Amz-Security-Token
-        AllowMethods:
-          - GET
-          - POST
-          - OPTIONS
-        AllowOrigin: "*" #  Replace with your actual domain(s)
 
 Outputs:
   ApiEndpoint:

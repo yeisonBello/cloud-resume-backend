@@ -68,3 +68,149 @@ jobs:
       - name: Run Tests
         run: python -m unittest discover src/tests
 
+
+
+
+===============================================
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+
+# Define environment variables for consistency and easier management
+env:
+  AWS_REGION: us-east-1 # Replace with your AWS region or use secrets.AWS_REGION
+  IAM_ROLE_ARN: ${{ secrets.IAM_ROLE_BACKEND }} # Secret containing the ARN of the IAM role to assume
+  STACK_NAME: cloud-resume-backend # Replace with your stack name or use secrets.STACK_NAME
+
+# Add permissions block for OIDC token
+permissions:
+  id-token: write # Required to fetch the OIDC token.
+  contents: read # Required to checkout the code
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Use latest version
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Use latest version
+        with:
+          python-version: 3.9 # Consider using a newer supported Python version if possible
+
+      - name: Install dependencies
+        # Combine dependency installation and packaging steps for efficiency
+        run: |
+          pip install -r src/requirements.txt
+          mkdir -p build
+          cp src/lambda_function.py build/
+          # Copy only necessary files to the build directory
+          # Install dependencies directly into the build target directory
+          pip install -r src/requirements.txt -t build/
+          # No need to copy requirements.txt into build if installing directly
+
+      - name: Package Lambda function
+        # Package from the build directory context
+        run: |
+          cd build
+          zip -r ../deployment.zip .
+          cd .. # Return to the root directory
+
+      # Step to configure AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          role-session-name: GitHubActionsBackendDeploy # Descriptive session name
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Deploy step using AWS CLI as an alternative
+      - name: Deploy with AWS CLI
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name ${{ env.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --region ${{ env.AWS_REGION }} \
+            --no-fail-on-empty-changeset # Optional: Don't fail if no changes are detected
+
+      # Consider running tests earlier, perhaps after install but before packaging/deploy
+      - name: Run Tests
+        run: python -m unittest discover src/tests
+
+
+
+==================================================================================
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+
+# Define environment variables for consistency and easier management
+env:
+  AWS_REGION: us-east-1 # Replace with your AWS region or use secrets.AWS_REGION
+  IAM_ROLE_ARN: ${{ secrets.IAM_ROLE_BACKEND }} # Secret containing the ARN of the IAM role to assume
+  STACK_NAME: cloud-resume-backend # Replace with your stack name or use secrets.STACK_NAME
+
+# Add permissions block for OIDC token
+permissions:
+  id-token: write # Required to fetch the OIDC token.
+  contents: read # Required to checkout the code
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Use latest version
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Use latest version
+        with:
+          python-version: 3.9 # Consider using a newer supported Python version if possible
+
+      - name: Install dependencies
+        # Combine dependency installation and packaging steps for efficiency
+        run: |
+          pip install -r src/requirements.txt
+          mkdir -p build
+          cp src/lambda_function.py build/
+          # Copy only necessary files to the build directory
+          # Install dependencies directly into the build target directory
+          pip install -r src/requirements.txt -t build/
+          # No need to copy requirements.txt into build if installing directly
+
+      - name: Package Lambda function
+        # Package from the build directory context
+        run: |
+          cd build
+          zip -r ../deployment.zip .
+          cd .. # Return to the root directory
+
+      # Step to configure AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          role-session-name: GitHubActionsBackendDeploy # Descriptive session name
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Deploy step using AWS CLI as an alternative
+      - name: Deploy with AWS CLI
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name ${{ env.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --region ${{ env.AWS_REGION }} \
+            --no-fail-on-empty-changeset # Optional: Don't fail if no changes are detected
+
+      # Consider running tests earlier, perhaps after install but before packaging/deploy
+      - name: Run Tests
+        run: python -m unittest discover src/tests
